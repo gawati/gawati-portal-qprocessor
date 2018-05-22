@@ -1,0 +1,20 @@
+{
+    "xmlServer" : {
+        "serviceEndPoint" : "http://localhost:8080/exist/restxq",
+        "api": {
+            "publishPkg": { 
+                "url": "/gw/publish",
+                "method": "post"
+            }
+        }
+    },
+    "portalData": {
+        "serviceEndPoint" : "http://localhost:8080/exist/restxq",
+        "api": {
+            "docExists": {
+                "url": "/gw/doc/exists",
+                "method": "post"
+            }
+        }
+    }
+}

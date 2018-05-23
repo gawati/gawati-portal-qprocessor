@@ -9,13 +9,7 @@ const toEditor = (statusObj) => {
   console.log(statusObj.iri);
   const statusApi = servicehelper.getApi("editorQProc", "status");
   const {url, method} = statusApi;
-
-  //For testing.
-  const data = {
-    "iri": statusObj.iri,
-    "status": "published"
-  }
-
+  const data = statusObj;
   axios({
     method:method,
     url: url,

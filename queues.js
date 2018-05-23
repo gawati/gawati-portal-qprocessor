@@ -60,7 +60,7 @@ function publisherZipQ(conn) {
  
 // Consumer
 function consumerStatusQ(conn) {
-  const qName = 'ZIP_Q'; //Change to STATUS_Q
+  const qName = 'STATUS_Q';
   const ex = getExchange();
   const key = getQKey(qName);
 

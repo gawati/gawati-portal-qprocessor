@@ -8,11 +8,11 @@
             }
         }
     },
-    "portalData": {
-        "serviceEndPoint" : "http://localhost:8080/exist/restxq",
+    "editorQProc": {
+        "serviceEndPoint" : "http://localhost:9003",
         "api": {
-            "docExists": {
-                "url": "/gw/doc/exists",
+            "status": {
+                "url": "/gwcq/publish/status",
                 "method": "post"
             }
         }

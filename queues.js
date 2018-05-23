@@ -1,4 +1,5 @@
 const amqp = require('amqplib/callback_api');
+const status = require('./statusUpdate');
 
 /**
  * Important: mqConfig channels get set in the async calls.
@@ -50,10 +51,10 @@ function publisherZipQ(conn) {
     console.log(" %s publisher channel opened", qName);
 
     //Test Message
-    let msg = 'Hello World!';
+    // let msg = 'Hello World!';
     // let msg = "/akn/ke/act/legge/1970-06-03/Cap_44/eng@/!main";
-    channel.publish(ex, key, new Buffer(msg));
-    console.log(" [x] Sent %s: '%s'", key, msg);
+    // channel.publish(ex, key, new Buffer(msg));
+    // console.log(" [x] Sent %s: '%s'", key, msg);
   }
 }
  
@@ -73,10 +74,12 @@ function consumerStatusQ(conn) {
       channel.bindQueue(q.queue, ex, key);
       channel.consume(q.queue, function(msg) {
         console.log(" [x] %s: '%s'", msg.fields.routingKey, msg.content.toString());
+        const statusObj = JSON.parse(msg.content.toString());
+        status.toEditor(statusObj);
       }, {noAck: true});
 
       //For standalone testing only
-      publisherZipQ(conn);
+      // publisherZipQ(conn);
     });
   }
 }
@@ -85,7 +88,7 @@ const rabbit = amqp.connect('amqp://localhost', function(err, conn) {
   console.log(" AMQP CONNECTED");
   if (err != null) bail(err);
   consumerStatusQ(conn);
-  // publisherZipQ(conn);
+  publisherZipQ(conn);
 });
 
 module.exports = {

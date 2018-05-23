@@ -19,7 +19,8 @@ prAPIs["/publish/pkg"] = {
     stack: [
         pr.receiveFilesSubmitData,
         pr.verifyChecksum,
-        pr.publishOnPkgQ,
+        pr.storeZip,
+        pr.publishOnZipQ,
         pr.returnResponse
     ]
 };

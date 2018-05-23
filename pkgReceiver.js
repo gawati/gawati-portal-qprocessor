@@ -1,6 +1,9 @@
-const axios = require("axios");
-const mq = require("./queues");
+const axios = require('axios');
+const mq = require('./queues');
 const md5 = require('md5');
+const fs = require("fs-extra");
+const path = require("path");
+const constants = require("./constants");
 
 /**
  * Receives the submitted data. This particular API expects multipart form data.
@@ -53,29 +56,56 @@ const verifyChecksum = (req, res, next) => {
 };
 
 /**
+ * Store the zip file in a tmp folder
+ * @param {*} req
+ * @param {*} res
+ * @param {*} next
+ */
+const storeZip = (req, res, next) => {
+    console.log(" IN: storeZip");
+    const zipFile = res.locals.formFiles[0];
+    const filepath = path.join(constants.TMP_AKN_FOLDER(), zipFile.originalname);
+
+    fs.writeFile(filepath, zipFile.buffer, function(err) {
+        if (err) {
+            res.locals.returnResponse = {
+                'error': {
+                    'code': 'publish_pkg',
+                    'message': 'Error writing zip file.'
+                }
+            }
+            res.json(res.locals.returnResponse);
+        } else {
+            console.log(`Dumped zip file to ${filepath}`);
+            res.locals.zipPath = path.resolve(filepath);
+            next();
+        }
+    });
+}
+
+/**
  * Publishes the status for document iri on the STATUS_Q
  * @param {*} req
  * @param {*} res
  * @param {*} next
  */
-const publishOnPkgQ = (req, res, next) => {
-    console.log(" IN: publishOnPkgQ");
+const publishOnZipQ = (req, res, next) => {
+    console.log(" IN: publishOnZipQ");
+    const {iri} = res.locals.formObject;
+
     //Publish on ZIP_Q
+    const msg = {
+        "iri": iri,
+        "zipPath": res.locals.zipPath
+    }
+    const mq = require("./queues");
+    const qName = 'ZIP_Q';
+    const ex = mq.getExchange();
+    const key = mq.getQKey(qName);
+    mq.getChannel(qName).publish(ex, key, new Buffer(JSON.stringify(msg)));
+    console.log(" Pkg published on ZIP_Q");
 
-    //Respond to editor-qprocessor with status {"iri": "", "status", "under_processing"}
-
-    // const msg = {
-    //     "iri": iri,
-    //     "status": status
-    // }
-
-    // const mq = require("./queues");
-    // const qName = 'ZIP_Q';
-    // const ex = mq.getExchange();
-    // const key = mq.getQKey(qName);
-    // mq.getChannel(qName).publish(ex, key, new Buffer(JSON.stringify(msg)));
-    // console.log(" Status dispatched to Editor-FE");
-
+    //Respond to editor-qprocessor
     res.locals.returnResponse = {
         'success': {
             'code': 'publish_pkg',
@@ -95,6 +125,7 @@ const publishOnPkgQ = (req, res, next) => {
 module.exports = {
     receiveFilesSubmitData: receiveFilesSubmitData,
     verifyChecksum: verifyChecksum,
-    publishOnPkgQ: publishOnPkgQ,
+    storeZip: storeZip,
+    publishOnZipQ: publishOnZipQ,
     returnResponse: returnResponse
 };

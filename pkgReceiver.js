@@ -1,16 +1,18 @@
 const axios = require("axios");
 const mq = require("./queues");
+const md5 = require('md5');
 
 /**
- * Receives the Form posting, not suitable for multipart form data
+ * Receives the submitted data. This particular API expects multipart form data.
  * @param {*} req 
  * @param {*} res 
  * @param {*} next 
  */
-const receiveSubmitData = (req, res, next) =>  {
-    console.log(" IN: receiveSubmitData");
-    const formObject = req.body.data ; 
-    res.locals.formObject = formObject; 
+const receiveFilesSubmitData = (req, res, next) => {
+    // convert the formdata multipart object to use the json object form expected in formObject.
+    console.log(" IN: receiveFilesSubmitData");
+    res.locals.formObject = req.body;
+    res.locals.formFiles = req.files;
     next();
 };
 
@@ -26,6 +28,31 @@ const returnResponse = (req, res) => {
 };
 
 /**
+ * Verify the checksum of the zip file
+ * @param {*} req
+ * @param {*} res
+ * @param {*} next
+ */
+const verifyChecksum = (req, res, next) => {
+    console.log(" IN: verifyChecksum");
+    const {checksum} = res.locals.formObject;
+    const zipFile = res.locals.formFiles[0];
+
+    if(checksum === md5(zipFile.buffer)) {
+        console.log(` Checksum of ${zipFile.originalname} verified`);
+        next();
+    } else {
+        res.locals.returnResponse = {
+            'error': {
+                'code': 'publish_pkg',
+                'message': 'Checksum does not match.'
+            }
+        }
+        res.json(res.locals.returnResponse);
+    }
+};
+
+/**
  * Publishes the status for document iri on the STATUS_Q
  * @param {*} req
  * @param {*} res
@@ -33,11 +60,6 @@ const returnResponse = (req, res) => {
  */
 const publishOnPkgQ = (req, res, next) => {
     console.log(" IN: publishOnPkgQ");
-    console.log(res.locals.formObject);
-    const {checksum, zip} = res.locals.formObject;
-
-    //Verify checksum
-
     //Publish on ZIP_Q
 
     //Respond to editor-qprocessor with status {"iri": "", "status", "under_processing"}
@@ -54,12 +76,12 @@ const publishOnPkgQ = (req, res, next) => {
     // mq.getChannel(qName).publish(ex, key, new Buffer(JSON.stringify(msg)));
     // console.log(" Status dispatched to Editor-FE");
 
-    // res.locals.returnResponse = {
-    //     'success': {
-    //         'code': 'publish_status',
-    //         'message': res.locals.formObject
-    //     }
-    // }
+    res.locals.returnResponse = {
+        'success': {
+            'code': 'publish_pkg',
+            'message': 'Package submitted to Portal for processing.'
+        }
+    }
     next();
 };
 
@@ -71,7 +93,8 @@ const publishOnPkgQ = (req, res, next) => {
  * without proceeding to the next method in the API stack. 
  */
 module.exports = {
-    receiveSubmitData: receiveSubmitData,
+    receiveFilesSubmitData: receiveFilesSubmitData,
+    verifyChecksum: verifyChecksum,
     publishOnPkgQ: publishOnPkgQ,
     returnResponse: returnResponse
 };

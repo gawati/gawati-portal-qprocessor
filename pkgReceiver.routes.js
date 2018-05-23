@@ -17,7 +17,8 @@ Input object submitted to the API:
 prAPIs["/publish/pkg"] = {
     method: "post",
     stack: [
-        pr.receiveSubmitData,
+        pr.receiveFilesSubmitData,
+        pr.verifyChecksum,
         pr.publishOnPkgQ,
         pr.returnResponse
     ]

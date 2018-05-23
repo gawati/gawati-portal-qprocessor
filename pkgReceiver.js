@@ -3,6 +3,7 @@ const mq = require('./queues');
 const md5 = require('md5');
 const fs = require("fs-extra");
 const path = require("path");
+const mkdirp = require("mkdirp");
 const constants = require("./constants");
 
 /**
@@ -66,20 +67,26 @@ const storeZip = (req, res, next) => {
     const zipFile = res.locals.formFiles[0];
     const filepath = path.join(constants.TMP_AKN_FOLDER(), zipFile.originalname);
 
-    fs.writeFile(filepath, zipFile.buffer, function(err) {
-        if (err) {
-            res.locals.returnResponse = {
-                'error': {
-                    'code': 'publish_pkg',
-                    'message': 'Error writing zip file.'
+    mkdirp(constants.TMP_AKN_FOLDER(), function(err) {
+      if (err) {
+        logr.error(generalhelper.serverMsg(" ERROR while creating folder "), err);
+      } else {
+        fs.writeFile(filepath, zipFile.buffer, function(err) {
+            if (err) {
+                res.locals.returnResponse = {
+                    'error': {
+                        'code': 'publish_pkg',
+                        'message': 'Error writing zip file.'
+                    }
                 }
+                res.json(res.locals.returnResponse);
+            } else {
+                console.log(`Dumped zip file to ${filepath}`);
+                res.locals.zipPath = path.resolve(filepath);
+                next();
             }
-            res.json(res.locals.returnResponse);
-        } else {
-            console.log(`Dumped zip file to ${filepath}`);
-            res.locals.zipPath = path.resolve(filepath);
-            next();
-        }
+        });
+      }
     });
 }
 

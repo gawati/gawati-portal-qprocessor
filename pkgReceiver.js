@@ -109,7 +109,7 @@ const publishOnZipQ = (req, res, next) => {
     const qName = 'ZIP_Q';
     const ex = mq.getExchange();
     const key = mq.getQKey(qName);
-    mq.getChannel(qName).publish(ex, key, new Buffer(JSON.stringify(msg)));
+    mq.getChannel(qName).publish(ex, key, new Buffer(JSON.stringify(msg)), {persistent: true});
     console.log(" Pkg published on ZIP_Q");
 
     //Respond to editor-qprocessor

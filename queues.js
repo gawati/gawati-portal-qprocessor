@@ -13,6 +13,10 @@ let mqConfig = {
   "STATUS_Q": {
     "key": "statusQ",
     "channel": {}
+  },
+  "IRI_Q": {
+    "key": "iriQ",
+    "channel": {}
   }
 }
  
@@ -37,7 +41,7 @@ function getQKey(qName) {
   return mqConfig[qName].key;
 }
  
-// Publisher
+// Publisher ZIP_Q for publishing zipped pkgs
 function publisherZipQ(conn) {
   const qName = 'ZIP_Q';
   const ex = getExchange();
@@ -55,6 +59,21 @@ function publisherZipQ(conn) {
     // let msg = "/akn/ke/act/legge/1970-06-03/Cap_44/eng@/!main";
     // channel.publish(ex, key, new Buffer(msg));
     // console.log(" [x] Sent %s: '%s'", key, msg);
+  }
+}
+
+// Publisher IRI_Q for publishing IRIs to be retracted
+function publisherIriQ(conn) {
+  const qName = 'IRI_Q';
+  const ex = getExchange();
+  const key = getQKey(qName);
+
+  conn.createChannel(onOpen);
+  function onOpen(err, channel) {
+    if (err != null) bail(err);
+    setChannel(qName, channel);
+    channel.assertExchange(ex, 'direct', {durable: true});
+    console.log(" %s publisher channel opened", qName);
   }
 }
  
@@ -89,6 +108,7 @@ const rabbit = amqp.connect('amqp://localhost', function(err, conn) {
   if (err != null) bail(err);
   consumerStatusQ(conn);
   publisherZipQ(conn);
+  publisherIriQ(conn);
 });
 
 module.exports = {

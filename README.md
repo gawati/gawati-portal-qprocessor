@@ -4,6 +4,11 @@
 - Reads status from STATUS_Q 
 - Posts status update to editor-q-processor
 
+# Portal Q Processor Component for Gawati Retraction
+- Places iri to be retracted on IRI_Q 
+- Reads status from STATUS_Q 
+- Posts status update to editor-q-processor
+
 ### Setup
 1. Clone the repo
     ```

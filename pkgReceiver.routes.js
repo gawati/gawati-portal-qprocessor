@@ -25,4 +25,20 @@ prAPIs["/publish/pkg"] = {
     ]
 };
 
+/*
+Receives IRI to be retracted 
+Input object submitted to the API:
+"data": {
+    "iri": "/akn/ke/act/legge/1970-06-03/Cap_44/eng@/!main"
+}
+ */
+prAPIs["/retract/pkg"] = {
+    method: "post",
+    stack: [
+        pr.receiveSubmitData,
+        pr.publishOnIriQ,
+        pr.returnResponse
+    ]
+};
+
 module.exports.prAPIs = prAPIs;

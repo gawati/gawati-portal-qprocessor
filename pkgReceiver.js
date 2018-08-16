@@ -7,6 +7,19 @@ const mkdirp = require("mkdirp");
 const constants = require("./constants");
 
 /**
+ * Receives the Form posting, not suitable for multipart form data
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ */
+const receiveSubmitData = (req, res, next) =>  {
+    console.log(" IN: receiveSubmitData");
+    const formObject = req.body.data;
+    res.locals.formObject = formObject; 
+    next();
+};
+
+/**
  * Receives the submitted data. This particular API expects multipart form data.
  * @param {*} req 
  * @param {*} res 
@@ -123,6 +136,34 @@ const publishOnZipQ = (req, res, next) => {
 };
 
 /**
+ * Publishes the Iri to be acted upon, on the IRI_Q
+ * Currently only for Retracting a published document.
+ * @param {*} req
+ * @param {*} res
+ * @param {*} next
+ */
+const publishOnIriQ = (req, res, next) => {
+    console.log(" IN: publishOnIriQ");
+
+    //Publish on IRI_Q
+    const msg = res.locals.formObject;
+    const mq = require("./queues");
+    const qName = 'IRI_Q';
+    const ex = mq.getExchange();
+    const key = mq.getQKey(qName);
+    mq.getChannel(qName).publish(ex, key, new Buffer(JSON.stringify(msg)), {persistent: true});
+
+    //Respond to editor-qprocessor
+    res.locals.returnResponse = {
+        'success': {
+            'code': 'retract_pkg',
+            'message': 'Package submitted to Portal for processing.'
+        }
+    }
+    next();
+};
+
+/**
  * API methods for each Request end point.
  * You need to call next() at the end to ensure the next api in the chain
  * gets called.
@@ -134,5 +175,7 @@ module.exports = {
     verifyChecksum: verifyChecksum,
     storeZip: storeZip,
     publishOnZipQ: publishOnZipQ,
-    returnResponse: returnResponse
+    returnResponse: returnResponse,
+    receiveSubmitData: receiveSubmitData,
+    publishOnIriQ: publishOnIriQ
 };
